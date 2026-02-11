@@ -7,7 +7,6 @@
 //初期化
 void	LcdILI9225::Initialize(gpio_num_t pinSS, gpio_num_t pinDC, uint8_t panelSS, uint8_t panelBGR, uint8_t panelRev, int16_t width, int16_t height)
 {
-	//GLcd::Initialize(config);
 	GLcd::Initialize(SpiMode, SpiClock, pinSS, pinDC, width, height);
 	uint16_t bitSS = panelSS, bitBGR = panelBGR, bitREV = panelRev;
 
@@ -25,8 +24,8 @@ void	LcdILI9225::Initialize(gpio_num_t pinSS, gpio_num_t pinDC, uint8_t panelSS,
 	//IdxPOWER3,4,5: 初期値のままとする
 	
 	//画面系
-	regVal.R01DRIVER = (/*config.BitSS*/bitSS << 8) | 0x001C;	//SM-GS=00, NL[4:0]=11100(528[176xRGB]x220)
-	regVal.R03ENTRY = (/*config.BitBGR*/bitBGR << 12) | 0x0030;	//{I/D[1:0]=11, AM=0}:標準の向き（回転/反転なし）
+	regVal.R01DRIVER = (bitSS << 8) | 0x001C;	//SM-GS=00, NL[4:0]=11100(528[176xRGB]x220)
+	regVal.R03ENTRY = (bitBGR << 12) | 0x0030;	//{I/D[1:0]=11, AM=0}:標準の向き（回転/反転なし）
 	SendRegVal(ERegIdx::IdxDRIVER, regVal.R01DRIVER);
 	SendRegVal(ERegIdx::IdxENTRY, regVal.R03ENTRY);
 
@@ -37,7 +36,7 @@ void	LcdILI9225::Initialize(gpio_num_t pinSS, gpio_num_t pinDC, uint8_t panelSS,
 	*/
 	
 	//画面表示オン
-	regVal.R07DISPLAY = (/*config.BitREV*/bitREV << 2) | 0x0013;	//{GON=1, D[1:0]=11}:表示オン	※{=0, =00}で表示オフ
+	regVal.R07DISPLAY = (bitREV << 2) | 0x0013;	//{GON=1, D[1:0]=11}:表示オン	※{=0, =00}で表示オフ
 	SendRegVal(ERegIdx::IdxDISPLAY, regVal.R07DISPLAY);
 	
 	//SPIバス解放
