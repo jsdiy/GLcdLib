@@ -12,8 +12,8 @@
 #include "Img128x160V.hpp"	//縦_夜の駅前
 
 //オブジェクト
-//LcdILI9225	lcd;
-LcdST77xx	lcd;
+LcdILI9225	lcd;
+//LcdST77xx	lcd;
 Image	img;
 
 //色
@@ -29,20 +29,21 @@ void	setup()
 	Serial.begin(115200);
 	delay(1000);
 
-#if (0)	//ILI9925の例
+#if (1)	//ILI9925の例
 	//初期化
 	lcd.Initialize(GPIO_NUM_10, GPIO_NUM_4, 1, 1, 1);
+	lcd.RotateFlip(ERotFlip::Rot270);
 	lcd.ClearScreen(ColorBlue);
 
-	lcd.SetTextScale(1, 2);
+	lcd.SetTextScale(2, 4);
 	lcd.DrawString(0, 0, "Hello, World.");
 	delay(1000);
 
-	img.SetImage(EImageFormat::RGB565, Img20240210V::Width, Img20240210V::Height, Img20240210V::Datas, Img20240210V::Length);
-	lcd.DrawImage(0, 0, Img20240210V::Width, Img20240210V::Height, Img20240210V::Datas, Img20240210V::Length);
+	img.SetImage(EImageFormat::RGB565, Img20250330H::Width, Img20250330H::Height, Img20250330H::Datas, Img20250330H::Length);
+	lcd.DrawImage(0, 0, img);
 #endif
 
-#if (1)	//ST7735の例
+#if (0)	//ST7735の例
 	//初期化
 	lcd.Initialize(GPIO_NUM_10, GPIO_NUM_4, 7735, 128, 160, 0, 0);
 	lcd.RotateFlip(ERotFlip::Rot180);
