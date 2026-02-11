@@ -20,14 +20,14 @@ private:
 	int16_t	scaledCharW, scaledCharH;	//スケーリングした文字の大きさ（文字の余白を含む）
 	uint8_t*	charImgBuffer = nullptr;	//1文字を描画する画像バッファ（プレースホルダ）
 	size_t	charImgBufSize;
-	void	Initialize();
 	size_t	WriteColorToImageBuffer(const Color* color, int16_t repeat, size_t bufIndex, uint8_t* imgBuf);
 	void	DrawCharToImageBuffer(const uint8_t* fontDatas, uint8_t* imgBuf);
 	void	DrawCharImageToDsplay(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t* dmaBuf, size_t bufLength);
 	char	ToHexChar(uint8_t n) const;
 
 	public:
-	GLcdText() { Initialize(); }
+	GLcdText() {}
+	void	Initialize();
 	void	SetTextColor(const Color* color);	//文字の前景色
 	void	SetTextBgColor(const Color* color);	//文字の背景色
 	bool	SetTextScale(uint8_t xW, uint8_t xH);	//文字の拡大率
