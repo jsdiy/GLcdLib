@@ -10,11 +10,15 @@ void	GLcd::Initialize(uint8_t spiMode, uint32_t spiClock, gpio_num_t pinSS, gpio
 	//SPIバスにLCDモジュールを登録する
 	bool isOK = glcdSpi.AddDevice(spiMode, spiClock, pinSS, pinDC);
 	Serial.printf("SPI mode=%d, clock=%d, pinSS: %d, pinDC: %d, add-dev: %s\n", spiMode, spiClock, pinSS, pinDC, isOK ? "OK" : "NG");
+	Serial.printf("SPI DMA buffer:0x%X, bufSize=%d bytes\n", spiDma.GetBuffer(), spiDma.BufferSize());
 
 	//画面サイズを決定する
 	screenWidth = LcdWidth = width;
 	screenHeight = LcdHeight = height;
 	Serial.printf("LCD screen size: %dx%d\n", LcdWidth, LcdHeight);
+
+	//テキスト描画を初期化する
+	GLcdText::Initialize();
 }
 
 //ハードウェアリセット
