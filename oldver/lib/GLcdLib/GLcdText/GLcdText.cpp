@@ -1,23 +1,15 @@
 //	グラフィックLCDライブラリ拡張：テキスト描画クラス
 //	『昼夜逆転』工作室	@jsdiy	https://github.com/jsdiy
-//	2025/10	初版
 
 #include <Arduino.h>
 #include "GLcdText.hpp"
+#include "SpiDma.hpp"
 
 //初期化
-void	GLcdText::Initialize(int16_t lcdWidth, int16_t lcdHeight)
+void	GLcdText::Initialize()
 {
 	font.Initialize();
-	SetTextScreen(lcdWidth, lcdHeight);
-	SetScale(1, 1);
-}
-
-//画面サイズをセットする
-void	GLcdText::SetTextScreen(int16_t screenWidth, int16_t screenHeight)
-{
-	this->screenWidth = screenWidth;
-	this->screenHeight = screenHeight;
+	SetTextScale(1, 1);
 }
 
 //文字の色（前景色）を設定する
@@ -33,11 +25,7 @@ void	GLcdText::SetTextBgColor(const Color* color)
 }
 
 //描画の拡大率を設定する
-//引数	realloc: スケーリング後に現在より小さいバッファで済む場合、メモリを再確保するか否か
-//true: メモリを再確保する
-//false: メモリを再確保せず、現在のバッファを使用する（デフォルト）
-//※スケーリング後に現在より大きなバッファが必要な場合、この引数に関係なく再確保される
-bool	GLcdText::SetScale(uint8_t xW, uint8_t xH, bool realloc)
+bool	GLcdText::SetTextScale(uint8_t xW, uint8_t xH)
 {
 	widthScale = (0 < xW) ? xW : 1;
 	heightScale = (0 < xH) ? xH : 1;
@@ -45,20 +33,15 @@ bool	GLcdText::SetScale(uint8_t xW, uint8_t xH, bool realloc)
 	scaledCharW = font.CharW() * widthScale;
 	scaledCharH = font.CharH() * heightScale;
 
-	//1文字分の描画データのバッファを確保する
-	size_t newBufLength = scaledCharW * scaledCharH * Color::Length;
-	if (imageBufferLength < newBufLength) { realloc = true; }
-	if (imageBufferLength == newBufLength) { realloc = false; }
-	// (imageBufferLength > newBufLength) { 再確保するかはreallocに従う }
-	if (realloc)
-	{
-		if (imageBuffer != nullptr) { heap_caps_free(imageBuffer); }
-		imageBuffer = (uint8_t*)heap_caps_malloc(newBufLength, MALLOC_CAP_DMA | MALLOC_CAP_32BIT);
-		//Serial.printf("Text imageBuffer size: %d byte\n", newBufLength);
-	}
-	imageBufferLength = (imageBuffer == nullptr) ? 0 : newBufLength;
+	//描画用のバッファを取得する
+	size_t reqBufSize = scaledCharW * scaledCharH * Color::Length;	//1文字に必要なバッファサイズ
+	bool isOK = (reqBufSize < spiDma.BufferSize());	//DMAバッファのサイズで対応できるか否か
+	charImgBuffer = isOK ? spiDma.GetBuffer() : nullptr;	//DMAバッファを割り当てる
+	charImgBufSize = isOK ? reqBufSize : 0;	//spiDma.BufferSize()ではなくreqBufSizeとすることに注意
+	Serial.printf("Text scale: %dx%d, request buffer size: %d bytes. buffer ptr: 0x%08X\n",
+		widthScale, heightScale, reqBufSize, charImgBuffer);
 
-	return (imageBuffer != nullptr);
+	return isOK;
 }
 
 //スケーリングと文字間隔を考慮した1文字の大きさ
@@ -69,48 +52,50 @@ void	GLcdText::GetCharSize(int16_t* charWidth, int16_t* charHeight)
 }
 
 //桁位置（0以上）のx座標
-int16_t	GLcdText::PointX(uint8_t column)
+int16_t	GLcdText::PointX(uint8_t column) const
 {
 	return scaledCharW * column;
 }
 
 //行位置（0以上）のy座標
-int16_t	GLcdText::PointY(uint8_t row)
+int16_t	GLcdText::PointY(uint8_t row) const
 {
 	return scaledCharH * row;
 }
 
 //文字を描く
 //引数:	開始位置
-//戻り値：	次に描く文字のx座標
+//戻り値：	次に描く文字のx座標	※文字を描かなかった場合はxは変化しない
 int16_t	GLcdText::DrawChar(int16_t x, int16_t y, char cc)
 {
 	//スケーリングを考慮した1文字が画面に収まるか
 	//・縦横とも余白を含めた大きさで判定する。文字画像バッファへは余白込みで描画しているため。
-	//・文字が画面の端に掛かる（文字が欠ける）場合は描かない。
+	//・文字が画面の端を超える（文字が欠ける）場合は描かない。
+	int16_t screenWidth = Width(), screenHeight = Height();
 	if (	(0 <= x) && (x + scaledCharW <= screenWidth)	&&
 			(0 <= y) && (y + scaledCharH <= screenHeight)	)
 	{
 		auto fontDatas = font.GetFontData(cc);
-		DrawCharToImageBuffer(fontDatas);
-		DrawImage(x, y, scaledCharW, scaledCharH, imageBuffer, imageBufferLength);
+		DrawCharToImageBuffer(fontDatas, charImgBuffer);
+		DrawCharImageToDsplay(x, y, scaledCharW, scaledCharH, charImgBuffer, charImgBufSize);
+		x += scaledCharW;
 	}
-	return x + scaledCharW;
+	return x;
 }
 
 //色データを画素数分、画像バッファへ出力する
-size_t	GLcdText::WriteColorToImageBuffer(const Color* color, int16_t repeat, size_t bufIndex)
+size_t	GLcdText::WriteColorToImageBuffer(const Color* color, int16_t repeat, size_t bufIndex, uint8_t* imgBuf)
 {
 	while (repeat--)
 	{
-		imageBuffer[bufIndex++] = color->Bytes[0];
-		imageBuffer[bufIndex++] = color->Bytes[1];
+		imgBuf[bufIndex++] = color->Bytes[0];
+		imgBuf[bufIndex++] = color->Bytes[1];
 	}
 	return bufIndex;
 }
 
 //スケーリングされた文字を画像バッファに描く（内部処理）
-void	GLcdText::DrawCharToImageBuffer(const uint8_t* fontDatas)
+void	GLcdText::DrawCharToImageBuffer(const uint8_t* fontDatas, uint8_t* imgBuf)
 {
 	//文字データの高さの分、繰り返す
 	size_t bufIdx = 0;
@@ -127,17 +112,25 @@ void	GLcdText::DrawCharToImageBuffer(const uint8_t* fontDatas)
 			Color& color = (pixel != 0) ? foreColor : bgColor;
 
 			//拡大倍数の分、1画素の色データを出力する
-			bufIdx = WriteColorToImageBuffer(&color, widthScale, bufIdx);
+			bufIdx = WriteColorToImageBuffer(&color, widthScale, bufIdx, imgBuf);
 		}
 
 		//いま出力した1行を拡大倍数の分、画像バッファ上で2行目、3行目…へとコピーする
 		size_t length = bufIdx - startIndex;	//1行分の描いたデータの長さ
 		for (uint8_t lineRepeat = 0; lineRepeat < heightScale - 1; lineRepeat++)
 		{
-			memcpy(&imageBuffer[bufIdx], &imageBuffer[startIndex], length);
+			memcpy(&imgBuf[bufIdx], &imgBuf[startIndex], length);
 			bufIdx += length;
 		}
 	}
+}
+
+//画面に文字を描く
+void	GLcdText::DrawCharImageToDsplay(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t* dmaBuf, size_t bufLength)
+{
+	BeginSendGRamData(x, y, w, h);
+	SendGRamData(dmaBuf, bufLength);
+	EndSendGRamData();
 }
 
 //文字列を描く
@@ -146,6 +139,7 @@ void	GLcdText::DrawCharToImageBuffer(const uint8_t* fontDatas)
 //戻り値：	次に描く文字のx座標
 int16_t GLcdText::DrawString(int16_t x, int16_t y, const char* s)
 {
+	int16_t screenWidth = Width();
 	while (x + scaledCharW < screenWidth)
 	{
 		char cc = *(s++);
@@ -177,7 +171,7 @@ int16_t	GLcdText::DrawByte(int16_t x, int16_t y, uint8_t n)
 }
 
 //4bit値を16進数表現の文字に変換する
-char	GLcdText::ToHexChar(uint8_t n)
+char	GLcdText::ToHexChar(uint8_t n) const
 {
 	char cc = (n < 10) ? ('0' + n) : ('A' + (n - 10));
 	return cc;
