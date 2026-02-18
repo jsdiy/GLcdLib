@@ -216,7 +216,7 @@ int16_t	GLcdText::DrawUInt(int16_t x, int16_t y, uint32_t n)
 }
 
 //ラベル付きDrawWord
-int16_t	GLcdText::DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t n, const char* labelPost = nullptr)
+int16_t	GLcdText::DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t n, const char* labelPost)
 {
 	x = DrawString(x, y, labelPre);
 	x = DrawWord(x, y, n);
@@ -225,7 +225,7 @@ int16_t	GLcdText::DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t 
 }
 
 //ラベル付きDrawByte
-int16_t	GLcdText::DrawByte(int16_t x, int16_t y, const char* labelPre, uint8_t n, const char* labelPost = nullptr)
+int16_t	GLcdText::DrawByte(int16_t x, int16_t y, const char* labelPre, uint8_t n, const char* labelPost)
 {
 	x = DrawString(x, y, labelPre);
 	x = DrawByte(x, y, n);
