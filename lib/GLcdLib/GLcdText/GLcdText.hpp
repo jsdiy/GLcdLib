@@ -24,28 +24,43 @@ private:
 	size_t	WriteColorToImageBuffer(const Color& color, int16_t repeat, size_t bufIndex, uint8_t* imgBuf);
 	void	DrawCharToImageBuffer(const uint8_t* fontDatas, uint8_t* imgBuf);
 	void	DrawCharImageToDsplay(int16_t x, int16_t y, int16_t w, int16_t h, const uint8_t* dmaBuf, size_t bufLength);
-	char	ToHexChar(uint8_t n) const;
+	//char	ToHexChar(uint8_t n) const;
 
 	public:
 	GLcdText() {}
 	void	Initialize();
+	void	SetTextColor(const Color& foreColor, const Color& bgColor) { SetTextColor(foreColor); SetTextBgColor(bgColor); }
 	void	SetTextColor(const Color& color);	//文字の前景色
 	void	SetTextBgColor(const Color& color);	//文字の背景色
 	bool	SetTextScale(uint8_t xW, uint8_t xH);	//文字の拡大率
 	void	GetCharSize(int16_t* charWidth, int16_t* charHeight);	//拡大率と文字間隔を考慮した1文字の大きさ
 	int16_t	XFromCol(uint8_t column) const;	//桁位置(>=0)のx座標
-	int16_t	YFromRow(uint8_t row) const;	//桁位置(>=0)のx座標
+	int16_t	YFromRow(uint8_t row) const;	//行位置(>=0)のy座標
 	int16_t	DrawChar(int16_t x, int16_t y, char cc);
 	int16_t	DrawString(int16_t x, int16_t y, const char* s);
-	int16_t	DrawWord(int16_t x, int16_t y, uint16_t n);
-	int16_t	DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t n, const char* labelPost = nullptr);
-	int16_t	DrawByte(int16_t x, int16_t y, uint8_t n);
-	int16_t	DrawByte(int16_t x, int16_t y, const char* labelPre, uint8_t n, const char* labelPost = nullptr);
-	int16_t	DrawInt(int16_t x, int16_t y, int32_t n);
-	int16_t	DrawInt(int16_t x, int16_t y, const char* labelPre, int32_t n, const char* labelPost = nullptr);
-	int16_t	DrawUInt(int16_t x, int16_t y, uint32_t n);
-	int16_t	DrawUInt(int16_t x, int16_t y, const char* labelPre, uint32_t n, const char* labelPost = nullptr);
+	int16_t	DrawWord(int16_t x, int16_t y, uint16_t n, const char* prefix = "") { return Printf(x, y, "%s%04X", prefix, n); }
+	int16_t	DrawByte(int16_t x, int16_t y, uint8_t n, const char* prefix = "") { return Printf(x, y, "%s%02X", prefix, n); }
+	int16_t	DrawInt(int16_t x, int16_t y, int32_t n) { return Printf(x, y, "%d", n); }
+	int16_t	DrawUInt(int16_t x, int16_t y, uint32_t n) { return Printf(x, y, "%d", n); }
+	//int16_t	DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t n, const char* labelPost = nullptr);
+	//int16_t	DrawByte(int16_t x, int16_t y, const char* labelPre, uint8_t n, const char* labelPost = nullptr);
+	//int16_t	DrawInt(int16_t x, int16_t y, const char* labelPre, int32_t n, const char* labelPost = nullptr);
+	//int16_t	DrawUInt(int16_t x, int16_t y, const char* labelPre, uint32_t n, const char* labelPost = nullptr);
+
+	template<typename... Args>
+	int16_t	Printf(int16_t x, int16_t y, const char* format, Args... args);
 
 protected:
 	virtual	~GLcdText() = default;
 };
+
+//printf()
+//最大100文字までで、'\t' や '\n' など制御コードには非対応
+template<typename... Args>
+int16_t	GLcdText::Printf(int16_t x, int16_t y, const char* format, Args... args)
+{
+	char buf[100 + 1];
+	size_t charLength = snprintf(buf, 100, format, args...);
+	x = DrawString(x, y, buf);
+	return x;
+}

@@ -149,6 +149,7 @@ int16_t GLcdText::DrawString(int16_t x, int16_t y, const char* s)
 	return x;
 }
 
+#if (0)	//Printf()へ置き換え
 //WORD値を表示する
 //戻り値：	次に描く文字のx座標
 int16_t	GLcdText::DrawWord(int16_t x, int16_t y, uint16_t n)
@@ -214,7 +215,9 @@ int16_t	GLcdText::DrawUInt(int16_t x, int16_t y, uint32_t n)
 	while (i != 0) { x = DrawChar(x, y, '0' + kbuf[--i]); }
 	return x;
 }
+#endif
 
+#if (0)	//廃止
 //ラベル付きDrawWord
 int16_t	GLcdText::DrawWord(int16_t x, int16_t y, const char* labelPre, uint16_t n, const char* labelPost)
 {
@@ -250,3 +253,4 @@ int16_t	GLcdText::DrawUInt(int16_t x, int16_t y, const char* labelPre, uint32_t 
 	if (labelPost != nullptr) { x = DrawString(x, y, labelPost); }
 	return x;
 }
+#endif
