@@ -151,9 +151,9 @@ void	GLcdGraphics::DrawRect(int16_t x, int16_t y, int16_t w, int16_t h, const Co
 void	GLcdGraphics::DrawRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t bold, const Color& color) const
 {
 	int16_t	x2 = x + w - 1,	y2 = y + h - 1;	//(x,y)の対角位置の座標
-	FillRect(x, y,         w, bold, color);	//上辺
+	FillRect(x, y,             w, bold, color);	//上辺
 	FillRect(x, y2 - bold + 1, w, bold, color);	//下辺
-	FillRect(x,         y + bold, bold, h - 2 * bold, color);	//左辺
+	FillRect(x,             y + bold, bold, h - 2 * bold, color);	//左辺
 	FillRect(x2 - bold + 1, y + bold, bold, h - 2 * bold, color);	//右辺
 }
 
