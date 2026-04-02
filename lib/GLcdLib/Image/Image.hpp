@@ -19,7 +19,7 @@ enum	class	EImageFormat	: uint8_t
 class	Image
 {
 protected:
-	const	uint8_t*	buffer;	//プレースホルダ（Imageクラスでnew/mallocしない）
+	uint8_t*	buffer;	//プレースホルダ（Imageクラスでnew/mallocしない）
 	size_t	bufLength;
 	int16_t	width, height;
 	EImageFormat	format;
@@ -29,10 +29,10 @@ protected:
 
 public:
 	Image() : buffer(nullptr) {}
-	Image(EImageFormat format, int16_t width, int16_t height, const uint8_t* imgDatas, size_t dataLength)
+	Image(EImageFormat format, int16_t width, int16_t height, uint8_t* imgDatas, size_t dataLength)
 		: format(format), width(width), height(height), buffer(imgDatas), bufLength(dataLength) { SetPixelParam(format); }
 	~Image() { buffer = nullptr; }	//明示的に手放すだけ（Imageクラスでdelete[]/freeしてはいけない）
-	void	SetImage(EImageFormat format, int16_t width, int16_t height, const uint8_t* imgDatas, size_t dataLength);
+	void	SetImage(EImageFormat format, int16_t width, int16_t height, uint8_t* imgDatas, size_t dataLength);
 	uint8_t*	GetBuffer(int16_t x = 0, int16_t y = 0) const;
 	size_t	BufLength(int16_t x = 0, int16_t y = 0) const;
 	size_t	DataLengthOf(size_t pixelCount) const;

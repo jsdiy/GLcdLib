@@ -6,7 +6,7 @@
 
 //画像情報をセットする
 //引数	imgDatas: 画素データ（DMA対応メモリに限らない）
-void	Image::SetImage(EImageFormat format, int16_t width, int16_t height, const uint8_t* imgDatas, size_t dataLength)
+void	Image::SetImage(EImageFormat format, int16_t width, int16_t height, uint8_t* imgDatas, size_t dataLength)
 {
 	this->format = format;
 	this->width = width;
@@ -45,7 +45,7 @@ void	Image::SetPixelParam(EImageFormat fmt)
 }
 
 //画像内の指定位置以降の画像データを取得する
-const	uint8_t*	Image::GetBuffer(int16_t x, int16_t y) const
+uint8_t*	Image::GetBuffer(int16_t x, int16_t y) const
 {
 	if (x == 0 && y == 0) { return buffer; }	//idxを計算する必要がないので直ちに返す
 	if (x < 0 || width <= x || y < 0 || height <= y)	//不正な引数の場合
