@@ -33,7 +33,7 @@ public:
 		: format(format), width(width), height(height), buffer(imgDatas), bufLength(dataLength) { SetPixelParam(format); }
 	~Image() { buffer = nullptr; }	//明示的に手放すだけ（Imageクラスでdelete[]/freeしてはいけない）
 	void	SetImage(EImageFormat format, int16_t width, int16_t height, const uint8_t* imgDatas, size_t dataLength);
-	const	uint8_t*	GetBuffer(int16_t x = 0, int16_t y = 0) const;
+	uint8_t*	GetBuffer(int16_t x = 0, int16_t y = 0) const;
 	size_t	BufLength(int16_t x = 0, int16_t y = 0) const;
 	size_t	DataLengthOf(size_t pixelCount) const;
 	int16_t	Width() const { return width; }
