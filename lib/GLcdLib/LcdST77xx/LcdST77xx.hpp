@@ -2,6 +2,7 @@
 //	『昼夜逆転』工作室	@jsdiy	https://github.com/jsdiy
 //	2020/05 - 2025/08	初版（独立版）, メンテナンス
 //	2026/01	GLcdクラス共通化
+//	2026/04	RotateFlip()の画面横長グループ4つのcaseを修正／Initialize()でpanelBGRの実装漏れを修正
 
 #pragma	once
 
@@ -42,11 +43,11 @@ private:	//レジスタ関連
 		//・ML,MH: 画像がスクロールしている場合、リフレッシュ方向を設定するとチラつきが軽減される可能性がある。
 		MadctlMY_FlipV	= (1 << 7),	//MCUからメモリへの書き込み方向…	0:順方向, 1:逆方向（垂直反転）
 		MadctlMX_FlipH	= (1 << 6),	//MCUからメモリへの書き込み方向…	0:順方向, 1:逆方向（水平反転）
-		MadctlMV_Rot90	= (1 << 5),	//MCUからメモリへの書き込み方向…	0:水平方向優先, 1:垂直方向優先（90度回転）
+		MadctlMV_SwapHV	= (1 << 5),	//MCUからメモリへの書き込み方向…	0:水平方向優先, 1:垂直方向優先（90度回転後に水平反転した状態）
 		MadctlML	= (1 << 4),	//LCDパネルのリフレッシュ方向…	0:Top行→Bottom行方向, 1:Bottom行→Top行方向
 		MadctlRGB	= (1 << 3),	//メモリ上のRGBデータとLCDパネルのRGB画素の並び順の対応…	0:RGB, 1:BGR
 		MadctlMH	= (1 << 2),	//LCDパネルのリフレッシュ方向…	0:Left列→Right列方向, 1:Right列→Left列方向
-		Madctl_BitMask	= MadctlMY_FlipV | MadctlMX_FlipH | MadctlMV_Rot90,	//ビットが全て'1'
+		Madctl_BitMask	= MadctlMY_FlipV | MadctlMX_FlipH | MadctlMV_SwapHV,	//ビットが全て'1'
 	};
 
 	//レジスタ値	※初期化以降で書き換えが発生するレジスタの値を保持しておく目的

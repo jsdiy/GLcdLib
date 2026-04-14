@@ -8,6 +8,7 @@
 void	LcdST77xx::Initialize(gpio_num_t pinSS, gpio_num_t pinDC, uint16_t controller, int16_t width, int16_t height, uint8_t panelBGR, uint8_t panelInvOn)
 {
 	GLcd::Initialize(SpiMode, SpiClock, pinSS, pinDC, width, height);
+	regValMADCTL = 0;
 
 	//SPIバス占有
 	glcdSpi.BeginTransaction();
@@ -21,6 +22,13 @@ void	LcdST77xx::Initialize(gpio_num_t pinSS, gpio_num_t pinDC, uint16_t controll
 	//カラーモード（色深度）を指定する
 	if (controller == 7735) { SendCommandValue(Command::COLMOD, 0x05); }	//RGB:565
 	if (controller == 7789) { SendCommandValue(Command::COLMOD, 0x55); }	//RGB:565
+
+	//パネルの画素並び(RGB/BGR)を指定する
+	if (panelBGR)
+	{
+		SendCommandValue(Command::MADCTL, BitVal::MadctlRGB);
+		regValMADCTL |= BitVal::MadctlRGB;
+	}
 
 	//色反転（これが必要かはLCDモジュールによる）
 	if (panelInvOn) { SendCommand(Command::INVON); }
@@ -61,21 +69,21 @@ void	LcdST77xx::RotateFlip(ERotFlip param)
 	
 	//画面横長グループ
 	case	ERotFlip::Rot90:
-		val = BitVal::MadctlMV_Rot90;
+		val = BitVal::MadctlMV_SwapHV | BitVal::MadctlMX_FlipH;
 		break;
 
 	case	ERotFlip::Rot270:
-		val = BitVal::MadctlMV_Rot90 | BitVal::MadctlMX_FlipH | BitVal::MadctlMY_FlipV;
+		val = BitVal::MadctlMV_SwapHV | BitVal::MadctlMY_FlipV;
 		break;
 
 	case	ERotFlip::Rot90 | ERotFlip::FlipHorizontal:
 	case	ERotFlip::Rot270 | ERotFlip::FlipVertical:
-		val = BitVal::MadctlMV_Rot90 | BitVal::MadctlMX_FlipH;
+		val = BitVal::MadctlMV_SwapHV;
 		break;
 
 	case	ERotFlip::Rot90 | ERotFlip::FlipVertical:
 	case	ERotFlip::Rot270 | ERotFlip::FlipHorizontal:
-		val = BitVal::MadctlMV_Rot90 | BitVal::MadctlMY_FlipV;
+		val = BitVal::MadctlMV_SwapHV | BitVal::MadctlMX_FlipH | BitVal::MadctlMY_FlipV;
 		break;
 	}
 
@@ -86,13 +94,15 @@ void	LcdST77xx::RotateFlip(ERotFlip param)
 	glcdSpi.EndTransaction();
 
 	//回転状態に応じて画面の縦横サイズを入れ替える
-	SwapWidthHeight(val & (uint8_t)ERotFlip::Rot90);
+	//・(param&ERotFlip::Rot90)ではなく(val&BitVal::MadctlMV_SwapHV)で判定する必要がある。
+	SwapWidthHeight(val & BitVal::MadctlMV_SwapHV);
 }
 
 //データ書込み先のGRAM領域を設定する
 //引数:	データ書込み先のGRAM領域。画面内に収まっていること。
 void	LcdST77xx::SendCommandSetGRamArea(int16_t x, int16_t y, int16_t w, int16_t h) const 
 {
+	//描画領域をセットする
 	SendCommand(Command::CASET);
 	glcdSpi.SendData((uint16_t)x, (uint16_t)(x + w - 1));	//startX, endX
 	SendCommand(Command::RASET);
