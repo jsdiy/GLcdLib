@@ -1,8 +1,9 @@
 //	SPI-DMA制御
 //	『昼夜逆転』工作室	@jsdiy	https://github.com/jsdiy
 //	2024/06 - 2025/09	初版, 小規模改良
-//	2025/10	namespace_SpiPinConfigを追加, それに伴いInitialize()を更新
+//	2025/10	namespace_SpiPinConfigを追加（※後に廃止）, それに伴いInitialize()を更新
 //	2026/01	dmaBufferをこのクラスで持つよう変更, それをどこからでもGetBuffer()で取得できるよう変更
+//	2026/05	ESP32C2(ESP8684)に対応
 
 #pragma	once
 
@@ -22,10 +23,16 @@ private:	//定数
 	static	constexpr	gpio_num_t	PinMOSI = GPIO_NUM_7, PinMISO = GPIO_NUM_2, PinSCK = GPIO_NUM_6, PinSS = GPIO_NUM_10;
 	static	constexpr	size_t DefaultBufferSize = 24UL * 1024;	//16KB:速度とメモリ量のバランス, 24KB-28KB:高スループット狙い
 #endif
+#if	CONFIG_IDF_TARGET_ESP32C2	//ESP8684
+	static	constexpr	spi_host_device_t	HostID = SPI2_HOST;
+	static	constexpr	gpio_num_t	PinMOSI = GPIO_NUM_7, PinMISO = GPIO_NUM_2, PinSCK = GPIO_NUM_6, PinSS = GPIO_NUM_10;
+	static	constexpr	size_t DefaultBufferSize = 12UL * 1024;	//8KB:速度とメモリ量のバランス, 16KB未満:高スループット狙い
+#endif
 	/*	spi_bus_config_t.max_transfer_sz に指定する値について
 	SPI-DMAのデスクリプタ1つで4092byteまで転送可能
 	max_transfer_sz=0とした場合は4092byteを指定したことになる
-	max_transfer_szは、ESP32では64KBまで指定可能, ESP32-C3では262143bit(=32KB-1bit)まで指定可能
+	max_transfer_szに指定可能なサイズは、ESP32では64KiBまで, ESP32-C3では262143bit(=32KiB-1bit)まで,
+		ESP32-C2では131071bit(=16KiB-1bit)まで
 	*/
 
 public:	//DMA対応バッファ関連
