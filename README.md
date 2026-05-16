@@ -8,7 +8,7 @@ ESP32用 グラフィックLCDライブラリ。SPI-DMAで動作します。
 
 ## 動作確認環境
 - Windows11
-- PlatformIO + ArduinoFramework
+- PlatformIO + ArduinoFramework, pioarduino/platform-espressif32
 - ESP32, ESP32-C3, ESP8684(ESP32-C2)
 - SPI-LCD: ST7735(160x128), ST7789(320x240), ILI9225(176x220)
 
